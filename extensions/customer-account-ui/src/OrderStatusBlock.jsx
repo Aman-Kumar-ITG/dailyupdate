@@ -8,7 +8,6 @@ export default async () => {
 };
 
 function Extension() {
-
   const [addressData, setAddressData] = useState({
     firstName: "",
     lastName: "",
@@ -19,8 +18,9 @@ function Extension() {
     appartment: "",
     city: "",
     zipCode: "",
-    default: false,
+    defaultAddress: false,
   });
+  const [key1,setKey1] = useState(0);
   const [modelType, setModelType] = useState("");
   const [addresses, setAddresses] = useState([
     {
@@ -34,12 +34,14 @@ function Extension() {
       city: "dewas",
       zipCode: "455001",
       setDefaultAddress: false,
+      key:key1
     },
   ]);
+ 
   const [profileData, setProfileData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
+    firstName: "Aman",
+    lastName: "Kumar",
+    email: "amankumar@itgeeks.com",
   });
   return (
     <s-query-container>
@@ -47,7 +49,13 @@ function Extension() {
         setProfileData={setProfileData}
         profileData={profileData}
         modelType={modelType}
-        setModelType={setModelType}
+        addressData={addressData}
+        setAddressData={setAddressData}
+        selectCountry={""}
+        key1={key1}
+        setKey1={setKey1}
+        addresses={addresses}
+        setAddresses={setAddresses}
       />
       <s-stack
         inlineSize="100%"
@@ -91,7 +99,7 @@ function Extension() {
             >
               <s-box>
                 <s-text type="strong" tone="auto">
-                  aman kumar
+          {profileData.firstName} {" "}{profileData.lastName}
                 </s-text>
               </s-box>
               <s-box padding="small-500 none none none">
@@ -118,7 +126,7 @@ function Extension() {
               </s-box>
               <s-box inlineSize="100%">
                 <s-text type="generic" tone="info" color="base">
-                  amankumar@itgeeks.com
+                  {profileData.email}
                 </s-text>
               </s-box>
             </s-stack>
@@ -173,8 +181,9 @@ function Extension() {
                 gap="large-400"
                 blockSize="auto"
               >
-                <s-grid-item>
-                  <s-clickable
+                  {addresses?.map(v=><s-grid-item>
+                <s-clickable 
+                  key={v.key}
                     command="--show"
                     commandfor="modal1"
                     inlineSize="100%"
@@ -192,21 +201,21 @@ function Extension() {
                         justifyContent="space-between"
                       >
                         <s-box>
-                          <s-text>Default address</s-text>
+                          <s-text>{v.appartment?v.appartment:"Default address"}</s-text>
                         </s-box>
                         <s-box>
                           <s-icon type="edit" tone="custom" size="small" />
                         </s-box>
                       </s-stack>
                       <s-stack>
-                        <s-text>aman kumar</s-text>
-                        <s-text>4310 South Macadam Avenue</s-text>
-                        <s-text>Portland Oregon 97239</s-text>
-                        <s-text>United States</s-text>
+                        <s-text>{v.firstName} {" "} {v.lastName}</s-text>
+                        <s-text>{v.address}</s-text>
+                        <s-text>{v.city}{" "}{v.state}{" "}{v.zipCode}</s-text>
+                        <s-text>{v.country}</s-text>
                       </s-stack>
                     </s-stack>
                   </s-clickable>
-                </s-grid-item>
+                </s-grid-item>)}
               </s-grid>
             </s-stack>
           </s-stack>

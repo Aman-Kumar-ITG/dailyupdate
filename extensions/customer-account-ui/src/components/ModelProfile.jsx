@@ -1,78 +1,140 @@
 import "@shopify/ui-extensions/preact";
-import { render } from "preact";
+import { options, render } from "preact";
 import { useEffect, useState } from "preact/hooks";
 export const ModelProfile = ({
   setProfileData,
   profileData,
   modelType,
-  selectCountry
+  selectCountry,
+  addressData,
+  setAddressData,
+  key1,
+  setKey1,
+  addresses,
+  setAddresses,
 }) => {
-
-
-
-  const [countryData,setCountryData] = useState([]);
-  
+  const [countryData, setCountryData] = useState([]);
+  const [stateData, setStateData] = useState([]);
+  const [isStateLoading, setIsStateLoading] = useState(false);
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setProfileData({
-      ...profileData,
+    setAddressData((prev) => ({
+      ...prev,
       [name]: value,
-    });
+    }));
   };
+  const handleChange1 = (e) => {
+    const { name, value } = e.target;
+    setProfileData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+  const validateOnlyLettersAndSpaces = (value) => {
+    const regex = /^[A-Za-z ]+$/;
+    return regex.test(value);
+  };
+
+  const validateAlphaNumericWithLimitedSymbols = (value) => {
+    const regex = /^[A-Za-z0-9 _,:;-]+$/;
+    return regex.test(value);
+  };
+
+  const validateEmail = (value) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    return regex.test(value);
+  };
+
+  const validatePostalCode = (value) => {
+    const regex = /^[0-9]{6}$/;
+    return regex.test(value);
+  };
+
   const datafunc = async () => {
-    const response = await fetch('https://api.countrystatecity.in/v1/countries', {
-      headers: {
-        "X-CSCAPI-KEY": "3b6f8d4e3d50da71ce2f5c5ffb07be19cc001f3621ccceb9e98ddf57c8b7e64b"
-      }
-    });
-  
+    const response = await fetch(
+      "https://api.countrystatecity.in/v1/countries",
+      {
+        headers: {
+          "X-CSCAPI-KEY":
+            "3b6f8d4e3d50da71ce2f5c5ffb07be19cc001f3621ccceb9e98ddf57c8b7e64b",
+        },
+      },
+    );
+
     const data = await response.json();
-    return data;   // ✅ returns full array
+    return data;
   };
-  const stategetting = async () => {
-    const response = await fetch(`https://api.countrystatecity.in/v1/${}/IN/states`, {
-      headers: {
-        "X-CSCAPI-KEY": "3b6f8d4e3d50da71ce2f5c5ffb07be19cc001f3621ccceb9e98ddf57c8b7e64b"
-      }
-    });
-  
-    const data = await response.json();
-    return data;   // ✅ returns full array
+  const onSaveButton = () => {
+    if (modelType == "Add-address") {
+      setKey1((prev)=>prev + 1)
+      setAddresses((prev) => {
+        setAddresses((prev) => [
+      ...prev,
+      {
+        ...addressData,
+        key : key1
+      },
+    ]);;
+      });
+      setAddressData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        address: "",
+        country: "",
+        state: "",
+        appartment: "",
+        city: "",
+        zipCode: "",
+        defaultAddress: false,
+      });
+    } else if (modelType == "edit-profile"){
+      setProfileData(profileData);
+    } else {
+      ""
+    }
   };
   useEffect(() => {
     async function callApi() {
-      const info = await datafunc();  // await if it's async
+      const info = await datafunc();
       setCountryData(info);
     }
     callApi();
   }, []);
-  console.log(countryData);
-  
-  const states = [
-    { label: "Karnataka", value: "KA" },
-    { label: "California", value: "CA" },
-    { label: "Queensland", value: "QLD" },
-    { label: "São Paulo", value: "SP" },
-    { label: "Bavaria", value: "BY" },
-    { label: "British Columbia", value: "BC" },
-    { label: "Jalisco", value: "JAL" },
-    { label: "Scotland", value: "SCT" },
-    { label: "Hokkaido", value: "HKD" },
-    { label: "Gauteng", value: "GP" },
-    { label: "Lagos", value: "LA" },
-    { label: "Buenos Aires", value: "BA" },
-    { label: "West Java", value: "JB" },
-    { label: "Île-de-France", value: "IDF" },
-    { label: "Guangdong", value: "GD" },
-    { label: "Tatarstan", value: "TA" },
-    { label: "Cebu", value: "CEB" },
-    { label: "Lombardy", value: "LOM" },
-    { label: "Catalonia", value: "CAT" },
-    { label: "Dubai", value: "DU" },
-  ];
+  useEffect(() => {
+    if (!addressData.country) {
+      setStateData([]);
+      return;
+    }
+
+    const fetchStates = async () => {
+      try {
+        setIsStateLoading(true);
+
+        const response = await fetch(
+          `https://api.countrystatecity.in/v1/countries/${addressData.country}/states`,
+          {
+            headers: {
+              "X-CSCAPI-KEY":
+                "3b6f8d4e3d50da71ce2f5c5ffb07be19cc001f3621ccceb9e98ddf57c8b7e64b",
+            },
+          },
+        );
+        const data = await response.json();
+        setStateData(data);
+      } catch (error) {
+        console.error("State fetch error:", error);
+        setStateData([]);
+      } finally {
+        setIsStateLoading(false);
+      }
+    };
+
+    fetchStates();
+  }, [addressData.country]);
   return (
     <s-stack inlineSize="80%">
-      <s-modal size="large" id="modal1" heading={modelType.replace("-"," ")}>
+      <s-modal size="large" id="modal1" heading={modelType.replace("-", " ")}>
         <s-stack inlineSize="100%">
           <s-stack>
             <s-form>
@@ -83,9 +145,16 @@ export const ModelProfile = ({
                 justifyContent="start"
                 gap="base"
               >
-                {(modelType == "Add-address" || modelType == "Edit-address") && (
+                {(modelType == "Add-address" ||
+                  modelType == "Edit-address") && (
                   <s-stack inlineSize="100%">
-                    <s-select label="Country/Region">
+                    <s-select
+                      name="country"
+                      label="Country/Region"
+                      onChange={handleChange}
+                      value={addressData.Country}
+                    >
+                      <s-option value="">Select a Country</s-option>
                       {countryData?.map((v) => (
                         <s-option value={v.iso2}>{v.name}</s-option>
                       ))}
@@ -100,31 +169,62 @@ export const ModelProfile = ({
                   justifyContent="space-between"
                 >
                   <s-box inlineSize="49%">
-                    <s-text-field
-                      name="firstName"
-                      label="First Name"
-                      onInput={handleChange}
-                    ></s-text-field>
+                    {modelType == "Edit-profile" ? (
+                      <s-text-field
+                        name="firstName"
+                        label="First Name"
+                        onChange={handleChange1}
+                        value={profileData?.firstName || ""}
+                      ></s-text-field>
+                    ) : (
+                      <s-text-field
+                        name="firstName"
+                        label="First Name"
+                        onChange={handleChange}
+                        value={addressData?.firstName || ""}
+                      ></s-text-field>
+                    )}
                   </s-box>
                   <s-box inlineSize="49%">
                     {" "}
-                    <s-text-field
-                      name="lastName"
-                      label="Last Name"
-                      onInput={handleChange}
-                    ></s-text-field>
+                    {modelType == "Edit-profile" ? (
+                      <s-text-field
+                        name="lastName"
+                        label="Last Name"
+                        onChange={handleChange1}
+                        value={profileData?.lastName || ""}
+                      ></s-text-field>
+                    ) : (
+                      <s-text-field
+                        name="lastName"
+                        label="Last Name"
+                        onChange={handleChange}
+                        value={addressData?.lastName || ""}
+                      ></s-text-field>
+                    )}
                   </s-box>
                 </s-stack>
                 {modelType == "Edit-profile" && (
                   <s-stack inlineSize="100%">
-                    <s-text-field
-                      name="email"
-                      label="Email"
-                      onInput={handleChange}
-                    ></s-text-field>
+                    {modelType == "Edit-profile" ? (
+                      <s-text-field
+                        name="email"
+                        label="Email"
+                        onChange={handleChange1}
+                        value={profileData?.email || ""}
+                      ></s-text-field>
+                    ) : (
+                      <s-text-field
+                        name="email"
+                        label="Email"
+                        onChange={handleChange}
+                        value={addressData?.email || ""}
+                      ></s-text-field>
+                    )}
                   </s-stack>
                 )}
-                {(modelType == "Add-address" || modelType == "Edit-address") && (
+                {(modelType == "Add-address" ||
+                  modelType == "Edit-address") && (
                   <s-stack
                     inlineSize="100%"
                     direction="block"
@@ -133,10 +233,20 @@ export const ModelProfile = ({
                     gap="base"
                   >
                     <s-stack inlineSize="100%">
-                      <s-text-field label="Address"></s-text-field>
+                      <s-text-field
+                        name="address"
+                        label="Address"
+                        onChange={handleChange}
+                        value={addressData.address}
+                      ></s-text-field>
                     </s-stack>
                     <s-stack inlineSize="100%">
-                      <s-text-field label="Apartment, suite, etc (optional)"></s-text-field>
+                      <s-text-field
+                        name="appartment"
+                        label="Apartment, suite, etc (optional)"
+                        onChange={handleChange}
+                        value={addressData.appartment}
+                      ></s-text-field>
                     </s-stack>
                     <s-stack
                       direction="inline"
@@ -145,21 +255,51 @@ export const ModelProfile = ({
                       justifyContent="space-between"
                     >
                       <s-box inlineSize="31%">
-                        <s-text-field label="City"></s-text-field>
+                        <s-text-field
+                          name="city"
+                          label="City"
+                          onChange={handleChange}
+                          value={addressData.city}
+                        ></s-text-field>
                       </s-box>
                       <s-box inlineSize="31%">
-                        <s-select label="State">
-                          {states?.map((v) => (
-                            <s-option value={v.value}>{v.label}</s-option>
-                          ))}
+                        <s-select
+                          label="State"
+                          name="state"
+                          onChange={handleChange}
+                          value={addressData.state}
+                          disabled={!addressData.country || isStateLoading}
+                        >
+                          {!addressData.country && (
+                            <s-option value="">Select country first</s-option>
+                          )}
+
+                          {isStateLoading && (
+                            <s-option value="">Loading states...</s-option>
+                          )}
+
+                          {!isStateLoading &&
+                            stateData.map((v) => (
+                              <s-option value={v.iso2}>{v.name}</s-option>
+                            ))}
                         </s-select>
                       </s-box>
                       <s-box inlineSize="31%">
-                        <s-text-field label="Zip code"></s-text-field>
+                        <s-text-field
+                          name="zipCode"
+                          label="Zip Code"
+                          onChange={handleChange}
+                          value={addressData.zipCode}
+                        ></s-text-field>
                       </s-box>
                     </s-stack>
                     <s-stack>
-                      <s-checkbox label="This is my default address"></s-checkbox>
+                      <s-checkbox
+                        name="defaultAddress"
+                        onChange={handleChange}
+                        value={addressData.defaultAddress}
+                        label="This is my default address"
+                      ></s-checkbox>
                     </s-stack>
                   </s-stack>
                 )}
@@ -169,10 +309,22 @@ export const ModelProfile = ({
                   alignItems="center"
                   justifyContent="end"
                 >
-                  <s-stack>
-                    <s-link tone="neutral" command="--hide" commandfor="modal1">
-                      Delete
-                    </s-link>
+                  <s-stack
+                    inlineSize="20%"
+                    alignItems="start"
+                    justifyContent="start"
+                  >
+                    {modelType != "Edit-address" ? (
+                      <s-box></s-box>
+                    ) : (
+                      <s-link
+                        tone="neutral"
+                        command="--hide"
+                        commandfor="modal1"
+                      >
+                        Delete
+                      </s-link>
+                    )}
                   </s-stack>
                   <s-stack
                     inlineSize="80%"
@@ -188,6 +340,7 @@ export const ModelProfile = ({
                     </s-box>
                     <s-box>
                       <s-button
+                      onClick={onSaveButton}
                         variant="primary"
                         inlineSize="fill"
                         command="--hide"
